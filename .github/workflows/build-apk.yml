@@ -1,12 +1,14 @@
 name: Build APK
 
 # Run it from the Actions tab: "Build APK" -> "Run workflow".
-# If builder-base-support.patch is in the repo root, it is applied before building.
+# Applies builder-base-support.patch and builder-base-icons.patch (if they are in the repo root),
+# generates every Builder Base + per-level icon from the clash-of-clans-data package, runs the
+# tests, and builds the debug APK.
 on:
   workflow_dispatch:
     inputs:
       push_branch:
-        description: "Also commit the patched code to a branch named builder-base"
+        description: "Also commit the patched code and icons to a branch named builder-base"
         type: boolean
         default: false
   push:
@@ -18,30 +20,49 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 40
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
 
-      - name: Apply patch (if present and not applied yet)
+      - name: Apply patches (in order, if present and not applied yet)
         run: |
-          if [ -f builder-base-support.patch ]; then
-            if git apply --check builder-base-support.patch 2>/dev/null; then
-              git apply builder-base-support.patch
-              echo "Patch applied."
+          for p in builder-base-support.patch builder-base-icons.patch; do
+            if [ -f "$p" ]; then
+              if git apply --check "$p" 2>/dev/null; then
+                git apply "$p"
+                echo "Applied $p"
+              else
+                echo "$p already applied or does not match; skipping."
+              fi
             else
-              echo "Patch already applied or does not match; building as is."
+              echo "No $p found; skipping."
             fi
-          else
-            echo "No patch file found; building as is."
-          fi
+          done
 
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Generate icons (Builder Base and every building level)
+        run: |
+          set -e
+          mkdir -p /tmp/pkg && cd /tmp/pkg
+          npm pack clash-of-clans-data@0.19.1
+          tar xzf clash-of-clans-data-0.19.1.tgz
+          mkdir -p /tmp/sharp && cd /tmp/sharp
+          npm init -y >/dev/null
+          npm i sharp
+          cd "$GITHUB_WORKSPACE"
+          NODE_PATH=/tmp/sharp/node_modules node tools/gen_icons.cjs /tmp/pkg/package
+          ls app/src/main/assets/icons | wc -l
+
+      - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: 25
 
-      - uses: android-actions/setup-android@v3         
-        with:           
+      - uses: android-actions/setup-android@v3
+        with:
           packages: ''
 
       - uses: gradle/actions/setup-gradle@v4
@@ -65,14 +86,13 @@ jobs:
           name: test-report
           path: app/build/reports/tests/
 
-      - name: Commit patched code to builder-base branch
+      - name: Commit patched code and icons to builder-base branch
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.push_branch }}
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@users.noreply.github.com"
           git checkout -B builder-base
-          git rm -q --cached builder-base-support.patch 2>/dev/null || true
-          rm -f builder-base-support.patch
+          rm -f builder-base-support.patch builder-base-icons.patch
           git add -A
-          git commit -m "Add Builder Base timer support" || echo "Nothing to commit"
+          git commit -m "Add Builder Base timers and per-level icons" || echo "Nothing to commit"
           git push -f origin builder-base
