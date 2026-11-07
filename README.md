@@ -26,6 +26,13 @@ A home screen widget for Android that shows your Clash of Clans builder, laborat
   <img src="docs/screenshots/potion-active.png" alt="The widget with a Builder Potion running: the potion button shows the time left and the builder countdowns are shorter" width="420">
 </p>
 
+## Forked Update
+
+This fork includes the following improvements over the original project:
+
+- **Builder Base support:** Added support for Builder Base upgrade timers alongside the Home Village.
+- **Icon fix:** Fixed the missing/incorrect Builder Base icons so upgrades display properly in the widget.
+
 ## Install
 
 Clash Timers isn't on the Play Store, so you install the APK yourself.
