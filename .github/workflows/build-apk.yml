@@ -1,0 +1,76 @@
+name: Build APK
+
+# Run it from the Actions tab: "Build APK" -> "Run workflow".
+# If builder-base-support.patch is in the repo root, it is applied before building.
+on:
+  workflow_dispatch:
+    inputs:
+      push_branch:
+        description: "Also commit the patched code to a branch named builder-base"
+        type: boolean
+        default: false
+  push:
+    branches: [builder-base]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Apply patch (if present and not applied yet)
+        run: |
+          if [ -f builder-base-support.patch ]; then
+            if git apply --check builder-base-support.patch 2>/dev/null; then
+              git apply builder-base-support.patch
+              echo "Patch applied."
+            else
+              echo "Patch already applied or does not match; building as is."
+            fi
+          else
+            echo "No patch file found; building as is."
+          fi
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 25
+
+      - uses: android-actions/setup-android@v3
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Unit tests
+        run: ./gradlew :app:testDebugUnitTest --stacktrace
+
+      - name: Build debug APK
+        run: ./gradlew assembleDebug --stacktrace
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: ClashTimers-debug-apk
+          path: app/build/outputs/apk/debug/*.apk
+
+      - name: Upload test report (on failure)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-report
+          path: app/build/reports/tests/
+
+      - name: Commit patched code to builder-base branch
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.push_branch }}
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          git checkout -B builder-base
+          git rm -q --cached builder-base-support.patch 2>/dev/null || true
+          rm -f builder-base-support.patch
+          git add -A
+          git commit -m "Add Builder Base timer support" || echo "Nothing to commit"
+          git push -f origin builder-base
