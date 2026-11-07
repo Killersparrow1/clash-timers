@@ -10,7 +10,8 @@ import kotlinx.serialization.json.longOrNull
 
 /**
  * Parses the Clash of Clans village data export (Settings → Data Export → Copy).
- * Pure Kotlin, no Android dependencies. Builder Base sections (`*2`, `boosts`) are ignored.
+ * Pure Kotlin, no Android dependencies. Builder Base sections (`buildings2`, `traps2`, `heroes2`,
+ * `units2`) become [JobCategory.BB_BUILDER] / [JobCategory.STAR_LAB] jobs; Builder Base boosts are ignored.
  */
 object ExportParser {
 
@@ -65,6 +66,12 @@ object ExportParser {
 
         // Pet house.
         visitAll("pets", JobCategory.PET, JobSource.PET)
+
+        // Builder Base (night village). Entries without a `timer` (most of them) are skipped by `visit`.
+        visitAll("buildings2", JobCategory.BB_BUILDER, JobSource.BB_BUILDING)
+        visitAll("traps2", JobCategory.BB_BUILDER, JobSource.BB_TRAP)
+        visitAll("heroes2", JobCategory.BB_BUILDER, JobSource.BB_HERO)
+        visitAll("units2", JobCategory.STAR_LAB, JobSource.BB_UNIT)
 
         // Active home-village builder potion (Builder Base `clocktower_*` is ignored).
         val builderBoost = (root["boosts"] as? JsonObject)?.long("builder_boost")?.takeIf { it > 0 }

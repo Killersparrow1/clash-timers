@@ -76,6 +76,12 @@ class WidgetRenderer(private val context: Context) {
         fill(R.id.rows_builders, model.builderRows)
         fill(R.id.rows_lab, listOf(model.labRow))
         fill(R.id.rows_pet, listOf(model.petRow))
+        // Builder Base section: hidden unless a night village builder or the Star Lab is busy.
+        rv.setViewVisibility(R.id.bb_section, if (model.showBuilderBase) View.VISIBLE else View.GONE)
+        if (model.showBuilderBase) {
+            fill(R.id.rows_bb, model.bbRows)
+            fill(R.id.rows_starlab, listOfNotNull(model.starLabRow))
+        }
 
         rv.setTextViewText(R.id.foot_left, footer(model))
         rv.setTextViewText(R.id.foot_right, model.footerRight)
@@ -93,7 +99,7 @@ class WidgetRenderer(private val context: Context) {
         val v =RemoteViews(pkg, if (compact) R.layout.widget_row_compact else R.layout.widget_row)
         val iconPx = ((if (compact) 20 else 24) * density).roundToInt()
 
-        val icon = row.iconIds.firstNotNullOfOrNull { icons.bitmap(it.toString(), iconPx) }
+        val icon = row.iconIds.firstNotNullOfOrNull { icons.bitmapForLevel(it, row.iconLevel, iconPx) }
         if (icon != null) {
             v.setImageViewBitmap(R.id.row_icon, icon)
             v.setViewVisibility(R.id.row_icon, View.VISIBLE)
@@ -298,6 +304,18 @@ class WidgetIcons private constructor(private val context: Context) {
         }
         cache.put(key, scaled)
         return scaled
+    }
+
+    /**
+     * The art for [level] of building/trap [id] (`<id>_<level>.webp`); if that level has no file, the
+     * nearest lower one, then the plain `<id>` icon. Items without per-level art (heroes, troops) just
+     * get the plain icon.
+     */
+    fun bitmapForLevel(id: Int, level: Int?, sizePx: Int): Bitmap? {
+        if (level != null) {
+            for (l in level downTo 1) bitmap("${id}_$l", sizePx)?.let { return it }
+        }
+        return bitmap(id.toString(), sizePx)
     }
 
     companion object {

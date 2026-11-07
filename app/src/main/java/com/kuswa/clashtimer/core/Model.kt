@@ -1,9 +1,18 @@
 package com.kuswa.clashtimer.core
 
-enum class JobCategory { BUILDER, LAB, PET }
+enum class JobCategory {
+    BUILDER, LAB, PET,
+    /** Builder Base (night village) builders. They have no helpers or potions here. */
+    BB_BUILDER,
+    /** Builder Base Star Laboratory troop upgrades. */
+    STAR_LAB,
+}
 
 /** Where in the export a job was found. */
-enum class JobSource { BUILDING, MODULE, TRAP, HERO, GUARDIAN, UNIT, SPELL, SIEGE_MACHINE, PET }
+enum class JobSource {
+    BUILDING, MODULE, TRAP, HERO, GUARDIAN, UNIT, SPELL, SIEGE_MACHINE, PET,
+    BB_BUILDING, BB_TRAP, BB_HERO, BB_UNIT,
+}
 
 /**
  * One running upgrade from the export.
@@ -69,6 +78,10 @@ data class VillageExport(
     val regularBuilderJobs: List<Job> get() = builderJobs.filter { !it.isGoblin }
     val labJobs: List<Job> get() = jobs.filter { it.category == JobCategory.LAB }
     val petJobs: List<Job> get() = jobs.filter { it.category == JobCategory.PET }
+    /** Builder Base upgrades done by the night village builders (`buildings2`, `traps2`, `heroes2`). */
+    val bbBuilderJobs: List<Job> get() = jobs.filter { it.category == JobCategory.BB_BUILDER }
+    /** Builder Base Star Laboratory upgrades (`units2`). */
+    val starLabJobs: List<Job> get() = jobs.filter { it.category == JobCategory.STAR_LAB }
 
     /** The spec says at most one; extras (shouldn't happen) are still kept in [jobs]. */
     val labJob: Job? get() = labJobs.firstOrNull()

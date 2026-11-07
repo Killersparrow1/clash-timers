@@ -155,7 +155,7 @@ class ExportParserTest {
 
     // ---- Builder Base and other sections ----
 
-    @Test fun ignoresBuilderBaseAndPicksUpHeroTrapSpellSiegeTimers() {
+    @Test fun keepsBuilderBaseSeparateAndPicksUpHeroTrapSpellSiegeTimers() {
         val text = """
             {"tag":"#X","timestamp":100,
              "buildings":[{"data":1000001,"lvl":17,"cnt":1}],
@@ -170,7 +170,14 @@ class ExportParserTest {
         """.trimIndent()
         val e = (ExportParser.parse(text) as ParseResult.Success).export
         assertEquals(17, e.townHallLevel)
-        assertTrue(e.jobs.none { it.remainingAtT0 == 999L })
+        // Builder Base timers are parsed, but into their own categories, away from the home village.
+        assertEquals(
+            listOf(JobSource.BB_BUILDING, JobSource.BB_HERO),
+            e.bbBuilderJobs.map { it.source },
+        )
+        assertEquals(listOf(JobSource.BB_UNIT), e.starLabJobs.map { it.source })
+        assertTrue(e.builderJobs.none { it.remainingAtT0 == 999L })
+        assertTrue(e.labJobs.none { it.remainingAtT0 == 999L })
         assertEquals(listOf(JobSource.TRAP, JobSource.HERO), e.builderJobs.map { it.source })
         assertTrue(e.builderJobs.single { it.source == JobSource.HERO }.helperLinked)
         assertEquals(listOf(JobSource.SPELL, JobSource.SIEGE_MACHINE), e.labJobs.map { it.source })

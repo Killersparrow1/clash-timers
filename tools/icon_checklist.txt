@@ -210,3 +210,75 @@ Pets (pet house)
 73000016.webp         Sneezy
 73000010.webp         Spirit Fox
 73000003.webp         Unicorn
+
+Builder Base: Builder Hall (night builder)
+------------------------------------------
+1000034.webp          Builder Hall
+
+Builder Base: defenses (night builder)
+--------------------------------------
+1000054.webp          Air Bombs
+1000048.webp          Archer Tower
+1000044.webp          Cannon
+1000055.webp          Crusher
+1000041.webp          Double Cannon
+1000050.webp          Firecrackers
+1000057.webp          Giant Cannon
+1000051.webp          Guard Post
+1000043.webp          Hidden Tesla
+1000063.webp          Lava Launcher
+1000052.webp          Mega Tesla
+1000045.webp          Multi Mortar
+1000078.webp          O.T.T.O's Outpost
+1000056.webp          Roaster
+1000081.webp          X-Bow
+
+Builder Base: traps (night builder)
+-----------------------------------
+12000014.webp         Mega Mine
+12000013.webp         Mine
+12000011.webp         Push Trap
+12000010.webp         Spring Trap
+
+Builder Base: army buildings (night builder)
+--------------------------------------------
+1000042.webp          Army Camp
+1000080.webp          Battle Copter Altar
+1000053.webp          Battle Machine Altar
+1000040.webp          Builder Barracks
+1000082.webp          Healing Hut
+1000049.webp          Reinforcement Camp
+1000046.webp          Star Laboratory
+
+Builder Base: resource buildings (night builder)
+------------------------------------------------
+1000065.webp          B.O.B Control
+1000035.webp          Elixir Collector
+1000036.webp          Elixir Storage
+1000058.webp          Gem Mine
+1000037.webp          Gold Mine
+1000038.webp          Gold Storage
+
+Builder Base: other buildings (night builder)
+---------------------------------------------
+1000039.webp          Clock Tower
+
+Builder Base: heroes (night builder)
+------------------------------------
+28000005.webp         Battle Copter
+28000003.webp         Battle Machine
+
+Builder Base: troops (Star Laboratory)
+--------------------------------------
+4000041.webp          Baby Dragon
+4000033.webp          Beta Minion
+4000035.webp          Bomber
+4000034.webp          Boxer Giant
+4000037.webp          Cannon Cart
+4000038.webp          Drop Ship
+4000106.webp          Electrofire Wizard
+4000070.webp          Hog Glider
+4000042.webp          Night Witch
+4000036.webp          Power P.E.K.K.A
+4000031.webp          Raged Barbarian
+4000032.webp          Sneaky Archer

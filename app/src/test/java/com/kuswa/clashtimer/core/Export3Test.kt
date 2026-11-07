@@ -49,8 +49,8 @@ class Export3Test {
         )
         assertEquals(6, export3.regularBuilderJobs.size)
         assertTrue(export3.builderJobs.none { it.helperLinked })
-        // Builder Base timer (buildings2, 90808 s) is still ignored.
-        assertTrue(export3.jobs.none { it.remainingAtT0 == 90808L })
+        // The Builder Base timer (buildings2, 90808 s) is its own category, not a home village builder job.
+        assertTrue(export3.builderJobs.none { it.remainingAtT0 == 90808L })
     }
 
     @Test fun helperRecurrentFalseIsNotALink() {
@@ -89,6 +89,7 @@ class Export3Test {
             listOf(
                 "Inferno Tower → 12", "Scattershot → 6", "Scattershot → 6", "Wizard Tower → 12",
                 "Barbarian King → 99", "Royal Champion → 51", "Logger → 5", "Baby Dragon → 12", "Angry Jelly → 10",
+                "Double Cannon → 8",
             ),
             export3.jobs.map(names::label),
         )

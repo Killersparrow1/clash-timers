@@ -9,6 +9,7 @@ const fs = require('fs'), path = require('path');
 const [pkgDir, outFile] = process.argv.slice(2);
 const version = JSON.parse(fs.readFileSync(path.join(pkgDir, 'package.json'), 'utf8')).version;
 const home = path.join(pkgDir, 'data', 'home');
+const builder = path.join(pkgDir, 'data', 'builder'); // Builder Base (night village)
 
 // Upgrades with no builder/lab/pet timer: walls are instant, equipment is done at the Blacksmith.
 const SKIP_DIRS = new Set(['walls', 'hero-equipment']);
@@ -45,16 +46,17 @@ function scanFile(o) {
   }
 }
 
-(function walk(d) {
+function walk(d) {
   for (const f of fs.readdirSync(d).sort()) {
     const p = path.join(d, f);
     if (fs.statSync(p).isDirectory()) { if (!SKIP_DIRS.has(f)) walk(p); }
     else if (p.endsWith('.json')) scanFile(JSON.parse(fs.readFileSync(p, 'utf8')));
   }
-})(home);
+}
+[home, builder].forEach(walk);
 
 const sorted = Object.fromEntries(Object.keys(times).map(Number).sort((a, b) => a - b).map(k => [k, times[k]]));
-const out = { source: `clash-of-clans-data@${version} (data/home)`, times: sorted };
+const out = { source: `clash-of-clans-data@${version} (data/home + data/builder)`, times: sorted };
 fs.writeFileSync(outFile, JSON.stringify(out) + '\n');
 warnings.forEach(w => console.log('note:', w));
 console.log(`wrote upgrade times for ${Object.keys(sorted).length} IDs to ${outFile}`);

@@ -20,7 +20,7 @@ object WidgetActions {
                 links.copy(apprenticeJobKey = if (links.apprenticeJobKey == jobKey) null else jobKey)
             JobCategory.LAB ->
                 links.copy(labAssistantJobKey = if (links.labAssistantJobKey == jobKey) null else jobKey)
-            JobCategory.PET -> return state
+            JobCategory.PET, JobCategory.BB_BUILDER, JobCategory.STAR_LAB -> return state
         }
         return state.copy(links = newLinks)
     }
@@ -126,6 +126,8 @@ object FinishNotices {
         val heading = when {
             job.category == JobCategory.LAB -> "Lab free"
             job.category == JobCategory.PET -> "Pet house free"
+            job.category == JobCategory.BB_BUILDER -> "Builder Base builder free: $title"
+            job.category == JobCategory.STAR_LAB -> "Star Lab free"
             job.isGoblin -> "Goblin Builder done: $title"
             else -> "Builder free: $title"
         }

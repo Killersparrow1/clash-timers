@@ -56,8 +56,9 @@ const lastLevelImage = levels => {
 
 function indexPackage() {
   const byId = new Map();
+  const levelArt = new Map(); // dataId → [[level, image path]] for items that look different per level
   const modules = new Map(); // module dataId → parent dataId
-  (function walk(d) {
+  function walk(d) {
     for (const f of fs.readdirSync(d).sort()) {
       const p = path.join(d, f);
       if (fs.statSync(p).isDirectory()) { walk(p); continue; }
@@ -73,15 +74,24 @@ function indexPackage() {
           if (best) pick = { rel: best.normal, how: `effective level ${best.fromEffectiveLevel}-${best.toEffectiveLevel}` };
         } else {
           const l = lastLevelImage(o.levels);
-          if (l) pick = { rel: l.rel, how: `level ${l.level}` };
+          if (l) {
+            pick = { rel: l.rel, how: `level ${l.level}` };
+            // Every level's own art (supercharge levels restart at 1, so they are skipped).
+            const perLevel = new Map();
+            for (const x of o.levels) if (x.supercharge === undefined && x.images && x.images.normal) perLevel.set(x.level, x.images.normal);
+            levelArt.set(o.dataId, [...perLevel]);
+          }
           else if (o.images && o.images.normal) pick = { rel: o.images.normal, how: 'normal' };
         }
         byId.set(o.dataId, pick);
         for (const m of o.modules || []) modules.set(m.dataId, o.dataId);
       }
     }
-  })(path.join(pkgDir, 'data', 'home'));
-  return { byId, modules };
+  }
+  // Home village first, then the Builder Base (night village); the IDs don't overlap.
+  walk(path.join(pkgDir, 'data', 'home'));
+  walk(path.join(pkgDir, 'data', 'builder'));
+  return { byId, modules, levelArt };
 }
 
 // Widget artwork that isn't keyed by a game ID.
@@ -127,7 +137,7 @@ const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;',
 
 (async () => {
   const entries = readChecklist();
-  const { byId, modules } = indexPackage();
+  const { byId, modules, levelArt } = indexPackage();
   fs.mkdirSync(OUT_DIR, { recursive: true });
 
   const made = [], missing = [], fallback = [];
@@ -158,8 +168,23 @@ const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;',
     }
   }
 
+  // Per-level art: <id>_<level>.webp for every level of every building/trap that has its own image.
+  // The widget shows the art for the level being upgraded to (WidgetIcons.bitmapForLevel).
+  const levelMade = [];
+  for (const e of entries) {
+    if (!/^\d+$/.test(e.base)) continue;
+    const id = Number(e.base);
+    if (modules.has(id)) continue;
+    for (const [level, rel] of levelArt.get(id) || []) {
+      const src = path.join(pkgDir, rel);
+      if (!fs.existsSync(src)) continue;
+      const file = `${id}_${level}.webp`;
+      try { await makeIcon(src, path.join(OUT_DIR, file)); levelMade.push(file); } catch (err) { /* skip */ }
+    }
+  }
+
   // Old PNGs with the same names would be shadowed; remove stale .webp files not in the checklist.
-  const wanted = new Set(made.map(m => m.file));
+  const wanted = new Set([...made.map(m => m.file), ...levelMade]);
   for (const f of fs.readdirSync(OUT_DIR)) {
     if (f.endsWith('.webp') && !wanted.has(f)) fs.unlinkSync(path.join(OUT_DIR, f));
   }
@@ -247,6 +272,6 @@ for (const img of document.querySelectorAll('img[data-icon]')) img.src = 'data:i
   fs.writeFileSync(SHEET, html);
 
   const kb = made.reduce((a, m) => a + m.bytes, 0) / 1024;
-  console.log(`made ${made.length} icons (${kb.toFixed(1)} KiB), missing ${missing.length}, fallback ${fallback.length}`);
+  console.log(`made ${made.length} icons (${kb.toFixed(1)} KiB), missing ${missing.length}, fallback ${fallback.length}, per-level ${levelMade.length}`);
   for (const m of missing) console.log(`  missing ${m.base}: ${m.name} — ${m.why}`);
 })().catch(e => { console.error(e); process.exit(1); });

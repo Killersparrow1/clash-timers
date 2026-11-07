@@ -26,9 +26,21 @@ const SECTIONS = [
   ['siege-machines', 'Siege machines (lab)'],
   ['pets', 'Pets (pet house)'],
 ];
+// Builder Base (night village). Walls are instant and leagues have no timer, so they are left out.
+const builderBase = path.join(pkgDir, 'data', 'builder');
+const BB_SECTIONS = [
+  ['builder-hall', 'Builder Base: Builder Hall (night builder)'],
+  ['defenses', 'Builder Base: defenses (night builder)'],
+  ['traps', 'Builder Base: traps (night builder)'],
+  ['army-buildings', 'Builder Base: army buildings (night builder)'],
+  ['resource-buildings', 'Builder Base: resource buildings (night builder)'],
+  ['other', 'Builder Base: other buildings (night builder)'],
+  ['heroes', 'Builder Base: heroes (night builder)'],
+  ['troops', 'Builder Base: troops (Star Laboratory)'],
+];
 const HELPER_IDS = new Set([93000000, 93000001, 93000002, 93000003]);
 
-function collect(dir) {
+function collect(dir, base = home) {
   const out = [];
   (function walk(d) {
     for (const f of fs.readdirSync(d).sort()) {
@@ -42,7 +54,7 @@ function collect(dir) {
         for (const m of o.modules || []) out.push([m.dataId, `${o.name} ${m.name} (module)`]);
       }
     }
-  })(path.join(home, dir));
+  })(path.join(base, dir));
   return out;
 }
 
@@ -72,6 +84,14 @@ const lines = [
 let total = 8;
 for (const [dir, title] of SECTIONS) {
   const items = collect(dir);
+  if (!items.length) continue;
+  lines.push(title, '-'.repeat(title.length));
+  for (const [id, name] of items) lines.push(`${pad(String(id))}${name}`);
+  lines.push('');
+  total += items.length;
+}
+for (const [dir, title] of BB_SECTIONS) {
+  const items = collect(dir, builderBase);
   if (!items.length) continue;
   lines.push(title, '-'.repeat(title.length));
   for (const [id, name] of items) lines.push(`${pad(String(id))}${name}`);
